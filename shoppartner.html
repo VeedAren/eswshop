@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESW SHOP</title>
+  <style>
+    :root {
+      --primary: #1a1a1a;
+      --accent: #d4af37;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --text: #333;
+      --radius: 12px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --shadow-hover: 0 6px 24px rgba(0,0,0,0.15);
+      --transition: 0.3s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Шапка ─── */
+    header {
+      background: var(--primary);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .logo {
+      color: white;
+      font-size: 1.4rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .logo span { color: var(--accent); }
+    nav { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+    nav a {
+      color: #ddd;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 0.3rem 0;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    nav a:hover, nav a.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ─── Основной блок ─── */
+    main {
+      padding: 2rem 1rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1 0 auto;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    /* ─── Сетка и карточки ─── */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+    .product-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-4px);
+    }
+
+    .product-img-wrap {
+      height: 220px;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .product-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      transition: transform 0.3s ease;
+      padding: 0.5rem;
+    }
+    .product-card:hover .product-img {
+      transform: scale(1.05);
+    }
+
+    .product-info {
+      padding: 1rem 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .product-sku {
+      font-size: 0.8rem;
+      color: #777;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .product-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .product-price {
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: auto;
+    }
+    .btn-buy {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.2rem;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-top: 1rem;
+      transition: var(--transition);
+    }
+    .btn-buy:hover {
+      background: var(--accent);
+      color: var(--primary);
+    }
+
+    /* Метка «Партнёр» на карточках товаров партнёра */
+    .partner-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: var(--accent);
+      color: var(--primary);
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      z-index: 2;
+    }
+
+    /* ─── Модальное окно ─── */
+    #contact-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    #contact-overlay.visible {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .contact-box {
+      background: white;
+      border-radius: var(--radius);
+      max-width: 480px;
+      width: 95%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      overflow: hidden;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .contact-img-wrap {
+      height: 240px;
+      background-color: #fafafa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+    .contact-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .contact-body {
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .contact-sku {
+      font-size: 0.85rem;
+      color: #777;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+    }
+    .contact-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 0.4rem;
+      color: var(--primary);
+    }
+    .contact-price {
+      color: var(--accent);
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+    .contact-text {
+      font-size: 0.95rem;
+      color: #444;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    .social-links {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .social-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.8rem 0;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      color: white;
+      transition: transform 0.2s;
+    }
+    .social-btn:active { transform: scale(0.98); }
+    .social-btn.tg { background: #0088cc; }
+    .social-btn.vk { background: #0077ff; }
+    .btn-close {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+    }
+    .btn-close:hover { color: var(--primary); }
+
+    /* ─── Страница «О нас» ─── */
+    .about-hero {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .about-hero p {
+      max-width: 600px;
+      margin: 0 auto 1rem;
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+    .about-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .btn-link {
+      background: var(--primary);
+      color: white;
+      padding: 0.8rem 1.6rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+    .btn-link:hover {
+      background: var(--accent);
+      color: var(--primary);
+    }
+
+    /* ─── Страница «Партнёрство» ─── */
+    .partner-hero {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 2rem;
+    }
+    .partner-hero p {
+      line-height: 1.7;
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+    }
+    .partner-list {
+      text-align: left;
+      max-width: 550px;
+      margin: 2rem auto;
+      list-style: none;
+      padding: 0;
+    }
+    .partner-list li {
+      padding: 0.6rem 0 0.6rem 2rem;
+      position: relative;
+      line-height: 1.5;
+      font-size: 1rem;
+    }
+    .partner-list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    .partner-cta {
+      text-align: center;
+      margin-top: 2.5rem;
+    }
+    .partner-cta p {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+    .btn-partner {
+      display: inline-block;
+      background: #0088cc;
+      color: white;
+      padding: 1rem 2.5rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .btn-partner:hover {
+      background: #006da3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,136,204,0.3);
+    }
+
+    /* ─── Страница «Разместить товары» ─── */
+    .place-info {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 2rem;
+    }
+    .place-info p {
+      line-height: 1.7;
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+    }
+    .place-steps {
+      text-align: left;
+      max-width: 550px;
+      margin: 2rem auto;
+      list-style: none;
+      padding: 0;
+    }
+    .place-steps li {
+      padding: 0.8rem 0 0.8rem 2.5rem;
+      position: relative;
+      line-height: 1.5;
+      font-size: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+    .place-steps li:last-child { border-bottom: none; }
+    .place-steps li::before {
+      content: counter(step);
+      counter-increment: step;
+      position: absolute;
+      left: 0;
+      top: 0.8rem;
+      width: 1.6rem;
+      height: 1.6rem;
+      background: var(--accent);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+    .place-steps { counter-reset: step; }
+    .place-cta {
+      text-align: center;
+      margin-top: 2.5rem;
+    }
+    .place-cta p {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+    .place-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-back {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 0.9rem 2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+    }
+    .btn-back:hover {
+      background: #444;
+    }
+    .btn-contact {
+      display: inline-block;
+      background: #0088cc;
+      color: white;
+      padding: 0.9rem 2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .btn-contact:hover {
+      background: #006da3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,136,204,0.3);
+    }
+
+    /* ─── Кнопка внизу страницы каталога партнёра ─── */
+    .bottom-action {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid #ddd;
+    }
+    .btn-action {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--primary);
+      padding: 1rem 2.5rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+    }
+    .btn-action:hover {
+      background: var(--primary);
+      color: var(--accent);
+    }
+
+    /* ─── Подвал ─── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: var(--primary);
+      color: #888;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── Адаптив ─── */
+
+    /* Планшеты: 4 колонки */
+    @media (max-width: 1024px) {
+      .catalog-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+      }
+      .product-img-wrap { height: 200px; }
+      .contact-img-wrap { height: 220px; }
+    }
+
+    /* Телефоны: 2 колонки */
+    @media (max-width: 640px) {
+      header { padding: 0.8rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+      .logo { font-size: 1.1rem; }
+      nav { gap: 0.7rem; }
+      nav a { font-size: 0.8rem; }
+      main { padding: 1.5rem 1rem; }
+      h1 { font-size: 1.4rem; }
+
+      .catalog-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+      }
+      .product-img-wrap { height: 160px; padding: 0.3rem; }
+      .product-info { padding: 0.7rem 0.8rem 1rem; }
+      .product-sku { font-size: 0.65rem; }
+      .product-name { font-size: 0.85rem; }
+      .product-price { font-size: 1rem; }
+      .btn-buy { padding: 0.55rem 0.7rem; font-size: 0.8rem; margin-top: 0.8rem; }
+
+      .contact-box { max-width: 100%; width: 98%; }
+      .contact-img-wrap { height: 200px; }
+      .social-links { flex-direction: column; }
+      .social-btn { width: 100%; }
+      .about-buttons { flex-direction: column; align-items: center; }
+      .partner-list { padding: 0 1rem; }
+      .btn-partner { padding: 0.8rem 2rem; font-size: 0.95rem; }
+      .place-steps { padding: 0 1rem; }
+      .place-buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">ESW <span>SHOP</span></div>
+    <nav>
+      <a id="nav-catalog" class="active">Каталог</a>
+      <a id="nav-partner-catalog">Товары партнёра</a>
+      <a id="nav-about">О нас</a>
+      <a id="nav-partner">Пиар сотрудничество</a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ─── Каталог ─── -->
+    <section id="page-catalog" class="page active">
+      <h1>Каталог товаров</h1>
+      <div class="catalog-grid" id="catalog-grid"></div>
+    </section>
+
+    <!-- ─── Товары партнёра ─── -->
+    <section id="page-partner-catalog" class="page">
+      <h1>Товары партнёра</h1>
+      <div class="catalog-grid" id="partner-catalog-grid"></div>
+      <div class="bottom-action">
+        <button class="btn-action" onclick="showPage('page-place')">Как разместить у нас товары?</button>
+      </div>
+    </section>
+
+    <!-- ─── О нас ─── -->
+    <section id="page-about" class="page">
+      <h1>О нас</h1>
+      <div class="about-hero">
+        <p><strong>ESW SHOP</strong> — магазин стильных аксессуаров. Мы подбираем модели, которые подчёркивают индивидуальность и статус.</p>
+        <p>Наша команда помогает с выбором, консультирует по характеристикам и подбирает наши товары под ваш стиль и бюджет. Доставляем по всей стране, предлагаем удобные способы оплаты и гарантию на каждый экземпляр.</p>
+      </div>
+      <div class="about-buttons">
+        <a href="https://t.me/eswshopchannel" class="btn-link">Наш телеграмм канал</a>
+        <a href="https://vk.ru/veedaren" class="btn-link">Доставка и оплата (ВК)</a>
+        <a href="https://t.me/eswpzakazbot" class="btn-link">Доставка и оплата (tg)</a>
+      </div>
+    </section>
+
+    <!-- ─── Партнёрство ─── -->
+    <section id="page-partner" class="page">
+      <h1>Пиар сотрудничество</h1>
+      <div class="partner-hero">
+        <p>ESW SHOP приглашает к сотрудничеству блогеров, владельцев магазинов и всех, кто хочет зарабатывать на продаже наших товаров. Мы предлагаем прозрачные условия и поддержку на каждом этапе.</p>
+      </div>
+      <ul class="partner-list">
+        <li>Мы подбираем условия к каждому проекту индивидуально</li>
+        <li>Даём возможность выйти на регулярный доход</li>
+        <li>Дарим подарки постоянным партнёрам</li>
+        <li>Предоставляем маркетинговые материалы: фото, описания, каталоги</li>
+        <li>Персональный менеджер и поддержка 24/7</li>
+        <li>Возможность работать под собственным брендом</li>
+      </ul>
+      <div class="partner-cta">
+        <p>Готовы стать партнёром ESW SHOP? Подключитесь через нашего Telegram-бота — это займёт пару минут.</p>
+        <a href="https://t.me/eswpartnerbot" target="_blank" class="btn-partner">Подключить партнёрство</a>
+      </div>
+    </section>
+
+    <!-- ─── Разместить товары ─── -->
+    <section id="page-place" class="page">
+      <h1>Как разместить у нас товары?</h1>
+      <div class="place-info">
+        <p>ESW SHOP открыт для сотрудничества с производителями и поставщиками любых товаров. Если у вас качественный продукт и вы хотите донести его до широкой аудитории — мы поможем.</p>
+        <p>Размещение товаров в нашем каталоге — это возможность получить доступ к лояльной аудитории покупателей, профессиональную витрину и поддержку на всех этапах продажи.</p>
+      </div>
+      <ul class="place-steps">
+        <li>Свяжитесь с нами через кнопку ниже — расскажите о вашем продукте</li>
+        <li>Мы изучим ассортимент, обсудим условия и цены</li>
+        <li>Подготовим фото, описания и разместим товары в каталоге</li>
+        <li>Вы получаете заказы и выплаты по согласованным условиям</li>
+      </ul>
+      <div class="place-cta">
+        <p>Готовы разместить свои товары? Напишите нам — ответим в течение дня.</p>
+        <div class="place-buttons">
+          <button class="btn-back" onclick="showPage('page-catalog')">Вернуться в каталог</button>
+          <a href="https://t.me/eswpartnerbot" target="_blank" class="btn-contact">Связаться для размещения</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── Модальное окно ─── -->
+  <div id="contact-overlay">
+    <div class="contact-box">
+      <div class="contact-img-wrap">
+        <img id="modal-img" class="contact-img" src="" alt="" />
+      </div>
+      <div class="contact-body">
+        <div class="contact-sku" id="modal-sku"></div>
+        <div class="contact-name" id="modal-name"></div>
+        <div class="contact-price" id="modal-price"></div>
+        <p class="contact-text">Чтобы оформить заказ, свяжитесь с нашим менеджером — он уточнит наличие и поможет завершить покупку.</p>
+        <div class="social-links">
+          <a href="https://vk.com/veedaren" target="_blank" class="social-btn vk">ВКонтакте</a>
+          <a href="https://t.me/eswzakazbot" target="_blank" class="social-btn tg">Telegram</a>
+        </div>
+        <button class="btn-close" onclick="closeModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 ESW TIME. Все права защищены.
+  </footer>
+
+  <script>
+    // ─── Данные основных товаров (13 позиций) ───
+    const products = [
+      { sku: "ESW-001", name: "Casio tp789 blue",     price: "600 ₽", img: "https://avatars.mds.yandex.net/get-mpic/21642394/picd8377c64d8d4827bce575e83cc117f60/optimize" },
+      { sku: "ESW-002", name: "Casio mtp1100 s-black",       price: "550 ₽", img: "https://avatars.mds.yandex.net/get-mpic/21100830/pic8d174b426266dd1100170498640ef9b9/optimize" },
+      { sku: "ESW-003", name: "Casio mtp1100 silver",        price: "550 ₽", img: "https://avatars.mds.yandex.net/get-mpic/22071764/picf9797870671ade586111497466f38f13/optimize" },
+      { sku: "ESW-004", name: "Casio G-shock wr20",       price: "750 ₽", img: "https://avatars.mds.yandex.net/get-mpic/19812006/picfcefdd7fc829a8507204dd194484a3f8/optimize" },
+      { sku: "ESW-005", name: "Casio sn6688 жен.", price: "600 ₽", img: "https://avatars.mds.yandex.net/get-mpic/20396407/pic385b7079f1f2887817dda774a8cbdc71/optimize" },
+      { sku: "ESW-006", name: "Casio mtp1100 blue",     price:  "550 ₽", img: "https://avatars.mds.yandex.net/get-mpic/22081736/pic21acaba9bef09f4004255c33099df1c0/optimize" },
+      { sku: "ESW-007", name: "Casio tp789 black",         price: "600 ₽", img: "https://avatars.mds.yandex.net/get-mpic/22107006/pic0bd7932301c49a3da08356b6bcfa40a7/optimize" },
+      { sku: "ESW-008", name: "Casio tp789 silver",       price: "600 ₽", img: "https://avatars.mds.yandex.net/get-mpic/20396407/pic95a16253f4b51b66da0e8ce240bf46e2/optimize" },
+      { sku: "ESW-009", name: "Casio Vintage gold",       price: "350 ₽", img: "https://avatars.mds.yandex.net/get-mpic/21097988/picb62ad3ee4a70a3ff91d3c829cebbbe68/optimize" },
+      { sku: "ESW-010", name: "Casio Vintage black",       price: "300 ₽", img: "https://avatars.mds.yandex.net/get-mpic/20419207/pic9601c89c5bf68e95d9a59fdbb07e2529/optimize" },
+      { sku: "ESW-011", name: "Casio Vintage silver",     price: "300 ₽", img: "https://avatars.mds.yandex.net/get-mpic/21996514/pic86737324285faab109be38c9174905a0/optimize" }
+    ];
+
+    // ─── Данные товаров партнёра (4 позиции) ───
+    const partnerProducts = [
+      { sku: "PTN-101", name: "p1",      price: "8 ₽",  img: "https://placehold.co/400x300/1e3a5f/fff?text=1" },
+      { sku: "PTN-102", name: "p2",        price: "1 ₽", img: "https://placehold.co/400x300/1a5e3a/fff?text=2" },
+      { sku: "PTN-103", name: "p3",          price: "1 ₽",  img: "https://placehold.co/400x300/5e1a3a/fff?text=3" },
+      { sku: "PTN-104", name: "4",            price: "1 ₽", img: "https://placehold.co/400x300/3a1a5e/fff?text=4" }
+    ];
+
+    // ─── Рендер основного каталога ───
+    const grid = document.getElementById('catalog-grid');
+    products.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        <div class="product-img-wrap">
+          <img src="${p.img}" alt="${p.name}" class="product-img" />
+        </div>
+        <div class="product-info">
+          <div class="product-sku">Артикул: ${p.sku}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-price">${p.price}</div>
+          <button class="btn-buy" onclick="openModal(${i}, 'main')">Купить</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // ─── Рендер каталога партнёра ───
+    const partnerGrid = document.getElementById('partner-catalog-grid');
+    partnerProducts.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        <div class="product-img-wrap">
+          <span class="partner-badge">Партнёр</span>
+          <img src="${p.img}" alt="${p.name}" class="product-img" />
+        </div>
+        <div class="product-info">
+          <div class="product-sku">Артикул: ${p.sku}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-price">${p.price}</div>
+          <button class="btn-buy" onclick="openModal(${i}, 'partner')">Купить</button>
+        </div>
+      `;
+      partnerGrid.appendChild(card);
+    });
+
+    // ─── Переключение страниц ───
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      const navId = 'nav-' + pageId.replace('page-', '');
+      const navEl = document.getElementById(navId);
+      if (navEl) navEl.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    document.getElementById('nav-catalog').addEventListener('click', () => showPage('page-catalog'));
+    document.getElementById('nav-partner-catalog').addEventListener('click', () => showPage('page-partner-catalog'));
+    document.getElementById('nav-about').addEventListener('click', () => showPage('page-about'));
+    document.getElementById('nav-partner').addEventListener('click', () => showPage('page-partner'));
+
+    // ─── Модальное окно ───
+    function openModal(index, source) {
+      const list = source === 'partner' ? partnerProducts : products;
+      const p = list[index];
+      document.getElementById('modal-img').src = p.img;
+      document.getElementById('modal-img').alt = p.name;
+      document.getElementById('modal-sku').textContent = 'Артикул: ' + p.sku;
+      document.getElementById('modal-name').textContent = p.name;
+      document.getElementById('modal-price').textContent = p.price;
+      document.getElementById('contact-overlay').classList.add('visible');
+    }
+    function closeModal() {
+      document.getElementById('contact-overlay').classList.remove('visible');
+    }
+    document.getElementById('contact-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
